@@ -1,0 +1,114 @@
+# Agente de Impressão Automática
+
+Aplicação **standalone** para Windows que escuta novos pedidos do app web e imprime automaticamente na impressora padrão.
+
+**Totalmente isolada** – não depende do projeto principal. Pode ser copiada para qualquer máquina Windows.
+
+## Requisitos
+
+- Windows com impressora configurada como padrão
+- Python 3.10+ (ou use o .exe gerado)
+- [SumatraPDF](https://www.sumatrapdfreader.org/) instalado ou `SumatraPDF.exe` na pasta
+- Acesso à internet (conexão com Firestore)
+
+## Instalação Rápida
+
+### 1. Copie a pasta `print-agent` para a máquina Windows
+
+A pasta deve conter:
+- `agent.py`, `printer.py`, `receipt_generator.py`
+- `requirements.txt`
+- `config.json.example`
+- `run.bat`
+
+### 2. Obtenha a Service Account do Firebase
+
+1. [Firebase Console](https://console.firebase.google.com) → Seu projeto → Configurações (ícone engrenagem) → Contas de serviço
+2. Clique em **Gerar nova chave privada** → Baixe o JSON
+
+### 3. Configure (duas opções – transparente ao usuário)
+
+**Opção A – Credenciais embutidas (recomendado, um único arquivo):**
+
+Copie `config-embutido.json.example` para `config.json`. Abra o JSON baixado do Firebase e copie todo o conteúdo para a chave `"firebase"`:
+
+```json
+{
+  "database": "a2beats-db-dev",
+  "firebase": {
+    "type": "service_account",
+    "project_id": "a2b-eats-bl3m3",
+    "private_key_id": "...",
+    "private_key": "-----BEGIN PRIVATE KEY-----\n...\n-----END PRIVATE KEY-----\n",
+    "client_email": "firebase-adminsdk-xxx@a2b-eats-bl3m3.iam.gserviceaccount.com",
+    ...
+  }
+}
+```
+
+O usuário final só precisa desse `config.json` – sem arquivos extras.
+
+**Atalho:** Na máquina de desenvolvimento, execute `python gerar-config.py firebase-adminsdk-xxx.json` – o script cria o `config.json` automaticamente.
+
+**Opção B – Arquivo JSON separado:**
+
+Copie `config.json.example` para `config.json`. Coloque o JSON baixado como `service-account.json` na mesma pasta:
+
+```json
+{
+  "service_account": "service-account.json",
+  "database": "a2beats-db-dev"
+}
+```
+
+### 4. Instale dependências e execute
+
+**Opção A – Com Python instalado:**
+- Duplo-clique em `run.bat`
+- Ou: `pip install -r requirements.txt` e `python agent.py`
+
+**Opção B – Executável (.exe):**
+- Na máquina de desenvolvimento: execute `build.bat`
+- Copie `dist/PrintAgent.exe` para a máquina Windows
+- Coloque na mesma pasta: `config.json`, `service-account.json`
+- Execute `PrintAgent.exe`
+
+## Executar em segundo plano
+
+- **run-silent.bat** – inicia sem janela (usa pythonw)
+- **Iniciar com o Windows** – crie um atalho de `iniciar-com-windows.vbs` ou `run-silent.bat` na pasta de Inicialização:
+  - `Win+R` → `shell:startup` → Enter
+  - Cole o atalho na pasta que abrir
+
+## Conexão com o app web
+
+O agente conecta ao **Firestore** (Firebase) na internet. O app web grava os pedidos na coleção `orders`. O agente escuta em tempo real e imprime cada novo pedido.
+
+Não é necessário estar na mesma rede ou ter acesso às pastas do projeto.
+
+## Estrutura da pasta
+
+```
+print-agent/
+├── agent.py                  # Ponto de entrada
+├── printer.py                # Impressão silenciosa
+├── receipt_generator.py      # Geração do recibo
+├── config.json               # Configuração (contém credenciais se usar opção embutida)
+├── config.json.example       # Modelo com caminho para arquivo
+├── config-embutido.json.example  # Modelo com credenciais embutidas
+├── requirements.txt
+├── run.bat               # Iniciar com console
+├── run-silent.bat        # Iniciar sem janela
+├── build.bat             # Gerar PrintAgent.exe
+└── README.md
+```
+
+## Solução de problemas
+
+**"config.json não encontrado"** – Copie `config.json.example` para `config.json` e configure.
+
+**"SumatraPDF não encontrado"** – Instale em sumatrapdfreader.org ou coloque `SumatraPDF.exe` na pasta.
+
+**"Arquivo não encontrado" (service account)** – Verifique o caminho em `config.json`. Use nome do arquivo se estiver na mesma pasta.
+
+**Pedidos não imprimem** – Confirme que o `database` em `config.json` é o mesmo do app web (`a2beats-db-dev`).

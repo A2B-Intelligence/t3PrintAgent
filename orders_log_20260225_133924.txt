@@ -1,0 +1,113 @@
+[2026-02-25 13:39:24] MUDAÇA: ADDED - Pedido #26021837
+  ID: 26021837
+  Cliente: N/A
+  Data do Pedido: 2026-02-25 16:39:23 UTC
+  Status: Em Preparação
+  Total: 29
+  Items: 1
+  Detalhes dos Items:
+    1. N/A - Qtd: 1 - Preço: N/A
+------------------------------------------------------------
+[2026-02-25 13:39:24] PROCESSANDO - Pedido #26021837
+  ID: 26021837
+  Cliente: N/A
+  Data do Pedido: 2026-02-25 16:39:23 UTC
+  Status: Em Preparação
+  Total: 29
+  Items: 1
+  Detalhes dos Items:
+    1. N/A - Qtd: 1 - Preço: N/A
+------------------------------------------------------------
+[2026-02-25 13:39:27] IMPRESSO COM SUCESSO - Pedido #26021837
+  ID: 26021837
+  Cliente: N/A
+  Data do Pedido: 2026-02-25 16:39:23 UTC
+  Status: Em Preparação
+  Total: 29
+  Items: 1
+  Detalhes dos Items:
+    1. N/A - Qtd: 1 - Preço: N/A
+------------------------------------------------------------
+[2026-02-25 13:39:49] MUDAÇA: ADDED - Pedido #26021838
+  ID: 26021838
+  Cliente: N/A
+  Data do Pedido: 2026-02-25 16:39:48 UTC
+  Status: Em Preparação
+  Total: 0
+  Items: 1
+  Detalhes dos Items:
+    1. N/A - Qtd: 1 - Preço: N/A
+------------------------------------------------------------
+[2026-02-25 13:39:49] PROCESSANDO - Pedido #26021838
+  ID: 26021838
+  Cliente: N/A
+  Data do Pedido: 2026-02-25 16:39:48 UTC
+  Status: Em Preparação
+  Total: 0
+  Items: 1
+  Detalhes dos Items:
+    1. N/A - Qtd: 1 - Preço: N/A
+------------------------------------------------------------
+[2026-02-25 13:39:51] IMPRESSO COM SUCESSO - Pedido #26021838
+  ID: 26021838
+  Cliente: N/A
+  Data do Pedido: 2026-02-25 16:39:48 UTC
+  Status: Em Preparação
+  Total: 0
+  Items: 1
+  Detalhes dos Items:
+    1. N/A - Qtd: 1 - Preço: N/A
+------------------------------------------------------------
+[2026-02-25 13:41:44] MUDAÇA: MODIFIED - Pedido #26021837
+  ID: 26021837
+  Cliente: N/A
+  Data do Pedido: 2026-02-25 16:39:23 UTC
+  Status: Recebido
+  Total: 29
+  Items: 1
+  Detalhes dos Items:
+    1. N/A - Qtd: 1 - Preço: N/A
+------------------------------------------------------------
+[2026-02-25 13:41:46] MUDAÇA: MODIFIED - Pedido #26021838
+  ID: 26021838
+  Cliente: N/A
+  Data do Pedido: 2026-02-25 16:39:48 UTC
+  Status: Recebido
+  Total: 0
+  Items: 1
+  Detalhes dos Items:
+    1. N/A - Qtd: 1 - Preço: N/A
+------------------------------------------------------------
+[2026-02-25 13:42:41] MUDAÇA: ADDED - Pedido #26021839
+  ID: 26021839
+  Cliente: N/A
+  Data do Pedido: 2026-02-25 16:42:40 UTC
+  Status: Em Preparação
+  Total: 29
+  Items: 2
+  Detalhes dos Items:
+    1. N/A - Qtd: 1 - Preço: N/A
+    2. N/A - Qtd: 1 - Preço: N/A
+------------------------------------------------------------
+[2026-02-25 13:42:41] PROCESSANDO - Pedido #26021839
+  ID: 26021839
+  Cliente: N/A
+  Data do Pedido: 2026-02-25 16:42:40 UTC
+  Status: Em Preparação
+  Total: 29
+  Items: 2
+  Detalhes dos Items:
+    1. N/A - Qtd: 1 - Preço: N/A
+    2. N/A - Qtd: 1 - Preço: N/A
+------------------------------------------------------------
+[2026-02-25 13:42:45] IMPRESSO COM SUCESSO - Pedido #26021839
+  ID: 26021839
+  Cliente: N/A
+  Data do Pedido: 2026-02-25 16:42:40 UTC
+  Status: Em Preparação
+  Total: 29
+  Items: 2
+  Detalhes dos Items:
+    1. N/A - Qtd: 1 - Preço: N/A
+    2. N/A - Qtd: 1 - Preço: N/A
+------------------------------------------------------------
