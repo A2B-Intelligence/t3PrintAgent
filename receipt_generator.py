@@ -7,11 +7,11 @@ from typing import Any
 GROUP_CATEGORIES = {
     'cozinha': [
         'entradas quentes', 'poke bolw', 'yakisobas', 'sobremesas',
-        'rodizio premium - cozinha',
+        'rodizio premium - cozinha', 'Jow (x6)', 'Combinados', 'Pratos Quentes',
     ],
     'sushibar': [
         'entradas', 'hossomakis (x4)', 'uramakis (x4)', 'temaki',
-        'rodizio premium - sushibar',
+        'rodizio premium - sushibar', 'Sushis e Sashimis (x5)',
     ],
     'sushibarhot': ['hots (x4)'],
     'bar': ['bebidas', 'bebidas alcoólicas', 'bebidas não alcoólicas'],
@@ -31,7 +31,9 @@ def _get_group_for_category(category_name: str) -> str:
         return 'outros'
     name_lower = category_name.lower().strip()
     for group, categories in GROUP_CATEGORIES.items():
-        if name_lower in categories:
+        # Compara em minúsculas dos dois lados para não depender de como
+        # a categoria foi digitada aqui ou no banco
+        if any(name_lower == c.lower().strip() for c in categories):
             return group
     return 'outros'
 

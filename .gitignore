@@ -21,4 +21,5 @@ build/
 Thumbs.db
 SumatraPDF.exe
 *.json
-instalador.bat
+instalador.batPrintAgent-Update-*.zip
+update/

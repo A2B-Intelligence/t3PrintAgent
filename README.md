@@ -103,6 +103,30 @@ print-agent/
 └── README.md
 ```
 
+## Atualização do cliente (deploy de nova versão)
+
+O cliente roda a partir do código-fonte (`run.bat` + venv). Para enviar uma nova versão:
+
+### Na máquina de desenvolvimento
+
+1. Faça as alterações no código (ex.: novas categorias em `GROUP_CATEGORIES`)
+2. Atualize a constante `VERSION` em `agent.py` (ex.: `1.1.0` → `1.2.0`)
+3. Gere o pacote:
+   - **macOS/Linux:** `./criar-atualizacao.sh`
+   - **Windows:** `criar-atualizacao.bat`
+4. Envie o `PrintAgent-Update-vX.Y.Z.zip` ao cliente (WhatsApp, e-mail, etc.)
+
+### Na máquina do cliente
+
+1. Extrair a pasta `update` do ZIP **para dentro** da pasta do PrintAgent (a que contém `agent.py` e `config.json`)
+2. Duplo-clique em `update\atualizar.bat`
+
+O atualizador faz tudo sozinho: encerra o agente, faz backup da versão atual em `backup\`, copia os novos arquivos (sem tocar no `config.json`) e reinicia o agente. Para reverter, basta copiar os arquivos de `backup\<data>` de volta.
+
+### Categorias novas no cardápio
+
+O mapeamento categoria → local de impressão (`GROUP_CATEGORIES` em `receipt_generator.py`) é fixo no código. **Sempre que o restaurante criar uma categoria nova**, adicione-a à lista do grupo certo e gere uma atualização — caso contrário os itens dela saem em "OUTROS". A comparação ignora maiúsculas/minúsculas e espaços nas pontas, mas o nome precisa ser idêntico ao cadastrado no app web.
+
 ## Solução de problemas
 
 **"config.json não encontrado"** – Copie `config.json.example` para `config.json` e configure.

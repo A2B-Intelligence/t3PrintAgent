@@ -24,8 +24,15 @@ except ImportError:
     print("Execute: pip install -r requirements.txt")
     sys.exit(1)
 
-from receipt_generator import generate_receipt_html
+from receipt_generator import (
+    PRINT_ORDER,
+    _get_group_for_category,
+    generate_group_receipt_html,
+)
 from printer import print_to_default_printer
+
+# Versão do agente - atualize a cada release enviado ao cliente
+VERSION = '1.1.0'
 
 
 # Variável global para o arquivo de log
@@ -397,21 +404,26 @@ def process_order(order_id: str, order_data: dict, category_map: dict, db) -> bo
         product_name = get_product_name(db, order_data)
         
         # Agrupa os itens por categoria
-        from receipt_generator import PRINT_ORDER, _get_group_for_category
         grouped_items: dict[str, list] = {}
         items = order_data.get('items', []) or []
-        
+
+        category_map_recarregado = False
         for item in items:
             menu_item = item.get('menuItem', {}) or {}
             category_id = menu_item.get('categoryId', '')
+            if category_id and category_id not in category_map and not category_map_recarregado:
+                # Categoria criada depois que o agente iniciou: recarrega o mapa
+                # do Firestore para não classificar o item como 'outros'
+                print(f"[Agent] Categoria desconhecida ({category_id}), recarregando categorias...")
+                category_map.update(get_category_map(db))
+                category_map_recarregado = True
             category_name = category_map.get(category_id, '') or 'outros'
             group = _get_group_for_category(category_name)
             if group not in grouped_items:
                 grouped_items[group] = []
             grouped_items[group].append(item)
-        
+
         # Imprime um recibo separado para cada grupo que tiver itens
-        from receipt_generator import generate_group_receipt_html
         total_impressoes = 0
         total_sucesso = 0
         
@@ -460,7 +472,7 @@ def run_agent():
     """Inicia o agente de impressão."""
     config = load_config()
 
-    print("[Agent] Iniciando agente de impressão automática...")
+    print(f"[Agent] Iniciando agente de impressão automática (v{VERSION})...")
     print(f"[Agent] Database: {config['database']}")
 
     try:
