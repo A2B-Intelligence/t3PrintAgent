@@ -116,7 +116,9 @@ def print_to_default_printer(html_content: str) -> bool:
 
         creationflags = getattr(subprocess, 'CREATE_NO_WINDOW', 0) if os.name == 'nt' else 0
         result = subprocess.run(
-            [str(sumatra), '-print-to-default', str(temp_pdf)],
+            # noscale: o PDF já é gerado no tamanho do cupom (80mm), então
+            # imprime 1:1, sem encolher/centralizar (evita espaço em branco)
+            [str(sumatra), '-print-to-default', '-print-settings', 'noscale', str(temp_pdf)],
             capture_output=True,
             timeout=30,
             creationflags=creationflags,
