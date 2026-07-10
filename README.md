@@ -103,6 +103,36 @@ print-agent/
 └── README.md
 ```
 
+## Instalador .exe com credenciais embutidas (recomendado para novos clientes)
+
+Gera um único `PrintAgent-Setup-vX.Y.Z.exe`: o usuário leigo instala com "Avançar → Avançar → Concluir" e **não tem acesso ao config.json** — as credenciais ficam embutidas dentro do executável.
+
+### Preparar a máquina Windows de build (uma vez só)
+
+1. Instale [Python 3.10+](https://www.python.org/) (marque "Add to PATH")
+2. Instale o [Inno Setup 6](https://jrsoftware.org/isdl.php) (gratuito, opções padrão)
+3. Clone/copie esta pasta do projeto
+
+### Gerar o instalador
+
+1. Coloque na pasta do projeto:
+   - o JSON da service account do Firebase
+   - `SumatraPDF.exe` (versão portable)
+2. Gere o config: `python gerar-config.py sua-service-account.json`
+3. Rode `build-instalador.bat`
+
+Sai o `PrintAgent-Setup-vX.Y.Z.exe`. **Envie só esse arquivo ao cliente.**
+
+### O que o instalador faz no cliente
+
+- Instala em `%LocalAppData%\PrintAgent` (não pede senha de administrador)
+- Instala o SumatraPDF junto (impressão silenciosa)
+- Cria atalho no Menu Iniciar (+ área de trabalho, opcional)
+- Opção "Iniciar automaticamente com o Windows" (marcada por padrão)
+- Para **atualizar**: basta enviar um novo Setup e instalar por cima — ele encerra o agente sozinho e preserva o histórico de impressões do dia
+
+**Nota de segurança:** embutir no .exe esconde as credenciais do usuário comum, mas não é criptografia — alguém técnico com ferramentas consegue extrair. A proteção real é dar à service account só as permissões mínimas no Firestore. Se um dia precisar trocar a chave, gere um novo config.json + instalador e reinstale.
+
 ## Atualização do cliente (deploy de nova versão)
 
 O cliente roda a partir do código-fonte (`run.bat` + venv). Para enviar uma nova versão:

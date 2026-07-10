@@ -190,8 +190,16 @@ def load_config() -> dict:
          "service_account": "service-account.json",
          "database": "a2beats-db-dev"
        }
+
+    Ordem de busca do config.json:
+    1) Ao lado do executável/script (permite ajustar sem recompilar)
+    2) Embutido no .exe (PyInstaller --add-data, via build-instalador.bat)
     """
     config_path = BASE_DIR / 'config.json'
+    if not config_path.exists() and getattr(sys, 'frozen', False):
+        bundled = Path(getattr(sys, '_MEIPASS', '')) / 'config.json'
+        if bundled.exists():
+            config_path = bundled
     if not config_path.exists():
         print("ERRO: config.json não encontrado.")
         print(f"Copie config.json.example para config.json em: {BASE_DIR}")
