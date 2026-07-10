@@ -136,3 +136,5 @@ O mapeamento categoria → local de impressão (`GROUP_CATEGORIES` em `receipt_g
 **"Arquivo não encontrado" (service account)** – Verifique o caminho em `config.json`. Use nome do arquivo se estiver na mesma pasta.
 
 **Pedidos não imprimem** – Confirme que o `database` em `config.json` é o mesmo do app web (`a2beats-db-dev`).
+
+**Pedido não reimprime nem reiniciando o agente** – O agente registra os pedidos já impressos no dia em `pedidos_impressos.txt` (na pasta do agente) para nunca imprimir duplicado. Para forçar a reimpressão de um pedido, apague a linha com o ID dele nesse arquivo e reinicie o agente.

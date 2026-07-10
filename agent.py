@@ -9,6 +9,8 @@ Conecta ao app web via Firestore (internet).
 import json
 import os
 import sys
+import threading
+import time
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from typing import Optional
@@ -32,7 +34,7 @@ from receipt_generator import (
 from printer import print_to_default_printer
 
 # Versão do agente - atualize a cada release enviado ao cliente
-VERSION = '1.1.0'
+VERSION = '1.2.0'
 
 
 # Variável global para o arquivo de log
@@ -130,6 +132,45 @@ def close_log_file():
         except Exception:
             pass
         _log_file = None
+
+
+PRINTED_IDS_FILE = BASE_DIR / 'pedidos_impressos.txt'
+
+
+def load_printed_ids() -> set:
+    """
+    Carrega os IDs dos pedidos já impressos hoje.
+
+    Evita imprimir duas vezes quando o listener é renovado (watchdog)
+    ou quando o agente é reiniciado no meio da operação.
+    """
+    printed: set = set()
+    if not PRINTED_IDS_FILE.exists():
+        return printed
+    today = datetime.now().strftime('%Y-%m-%d')
+    try:
+        with open(PRINTED_IDS_FILE, encoding='utf-8') as f:
+            for line in f:
+                parts = line.strip().split('\t')
+                if len(parts) == 2 and parts[0] == today:
+                    printed.add(parts[1])
+        # Regrava só as linhas de hoje para o arquivo não crescer para sempre
+        with open(PRINTED_IDS_FILE, 'w', encoding='utf-8') as f:
+            for order_id in printed:
+                f.write(f"{today}\t{order_id}\n")
+    except Exception as e:
+        print(f"[Agent] Aviso ao ler {PRINTED_IDS_FILE.name}: {e}")
+    return printed
+
+
+def mark_printed(order_id: str, printed_ids: set):
+    """Marca um pedido como processado (memória + arquivo)."""
+    printed_ids.add(order_id)
+    try:
+        with open(PRINTED_IDS_FILE, 'a', encoding='utf-8') as f:
+            f.write(f"{datetime.now().strftime('%Y-%m-%d')}\t{order_id}\n")
+    except Exception as e:
+        print(f"[Agent] Aviso ao gravar {PRINTED_IDS_FILE.name}: {e}")
 
 
 def load_config() -> dict:
@@ -486,31 +527,41 @@ def run_agent():
     category_map = get_category_map(db)
     print(f"[Agent] {len(category_map)} categorias carregadas.")
 
+    printed_ids = load_printed_ids()
+    if printed_ids:
+        print(f"[Agent] {len(printed_ids)} pedido(s) já impresso(s) hoje não serão duplicados.")
+
     start_time = datetime.now(timezone.utc) - timedelta(minutes=1)
+
+    listener_health = {'last_event': None}
+    # Serializa as impressões e protege a deduplicação: durante a renovação
+    # do listener existem dois watches ativos por alguns instantes
+    print_lock = threading.Lock()
 
     def on_snapshot(doc_snapshot, changes, read_time):
         """Callback chamado quando há mudanças na coleção de pedidos."""
+        listener_health['last_event'] = datetime.now(timezone.utc)
         # Log de todas as mudanças detectadas
         print(f"\n[Agent] Snapshot recebido - {len(changes)} mudança(s) detectada(s)")
-        
+
         # Processa todas as mudanças
         for change in changes:
             change_type = change.type.name
             doc = change.document
-            
+
             if not doc.exists:
                 continue
-            
+
             data = doc.to_dict()
             order_id = doc.id
-            
+
             # Log de TODAS as ordens encontradas (independente do tipo de mudança)
             log_order(order_id, data, f'MUDAÇA: {change_type}')
-            
+
             # Processa apenas novos pedidos (ADDED)
             if change_type != 'ADDED':
                 continue
-            
+
             # Verifica se o pedido é recente (após start_time)
             order_date = data.get('orderDate')
             if order_date and hasattr(order_date, 'timestamp'):
@@ -518,9 +569,16 @@ def run_agent():
                 if doc_time < start_time:
                     log_order(order_id, data, 'IGNORADO (pedido antigo)')
                     continue
-            
-            # Processa o pedido (gera recibo e imprime)
-            process_order(order_id, data, category_map, db)
+
+            with print_lock:
+                # Pula pedidos já processados (reentregues por renovação
+                # do listener ou reinício do agente)
+                if order_id in printed_ids:
+                    log_order(order_id, data, 'IGNORADO (já impresso)')
+                    continue
+                mark_printed(order_id, printed_ids)
+                # Processa o pedido (gera recibo e imprime)
+                process_order(order_id, data, category_map, db)
 
     orders_ref = db.collection('orders')
     from google.cloud.firestore_v1.base_query import FieldFilter
@@ -551,25 +609,60 @@ def run_agent():
     #     print(f"[Agent] Aviso ao buscar pedidos iniciais: {e}")
     
     # Configura listener em tempo real
-    query = orders_ref.where(
-        filter=FieldFilter('orderDate', '>', start_time)
-    ).order_by('orderDate', direction=Query.ASCENDING)
-    
+    def subscribe(since):
+        """(Re)cria o listener de pedidos a partir do instante informado."""
+        query = orders_ref.where(
+            filter=FieldFilter('orderDate', '>', since)
+        ).order_by('orderDate', direction=Query.ASCENDING)
+        return query.on_snapshot(on_snapshot)
+
+    watch = subscribe(start_time)
+
     print("[Agent] Escutando novos pedidos em tempo real...")
     print("[Agent] Conectado ao app web via Firestore.")
     print("[Agent] Pressione Ctrl+C para encerrar.")
     print("-" * 50)
 
-    query.on_snapshot(on_snapshot)
+    # Watchdog: a API do Firestore não avisa quando o listener morre
+    # (queda de internet, token expirado). Renovamos a inscrição
+    # preventivamente a cada RENEW_INTERVAL; a janela de 5 min combinada
+    # com a deduplicação garante que nenhum pedido se perde nem duplica.
+    RENEW_INTERVAL = 15 * 60   # segundos entre renovações do listener
+    RETRY_MAX = 5 * 60         # espera máxima entre tentativas com falha
+    last_renew = time.monotonic()
+    retry_delay = 30
+
+    while True:
+        time.sleep(1)
+        if time.monotonic() - last_renew < RENEW_INTERVAL:
+            continue
+        try:
+            # Cria o novo watch antes de cancelar o antigo para nunca
+            # ficar sem listener; a sobreposição breve é coberta pelo lock
+            new_watch = subscribe(datetime.now(timezone.utc) - timedelta(minutes=5))
+            try:
+                watch.unsubscribe()
+            except Exception:
+                pass
+            watch = new_watch
+            last_renew = time.monotonic()
+            retry_delay = 30
+            last_event = listener_health['last_event']
+            if last_event:
+                minutos = int((datetime.now(timezone.utc) - last_event).total_seconds() // 60)
+                print(f"[Agent] Listener renovado (último evento: {minutos} min atrás).")
+            else:
+                print("[Agent] Listener renovado (nenhum evento recebido ainda).")
+        except Exception as e:
+            print(f"[Agent] Falha ao renovar listener: {e}")
+            print(f"[Agent] O listener atual segue ativo; nova tentativa em {retry_delay}s.")
+            time.sleep(retry_delay)
+            retry_delay = min(retry_delay * 2, RETRY_MAX)
 
 
 if __name__ == '__main__':
     try:
         run_agent()
-        # Mantém o programa rodando (on_snapshot roda em background)
-        import time
-        while True:
-            time.sleep(1)
     except KeyboardInterrupt:
         print("\n[Agent] Encerrado pelo usuário.")
         close_log_file()

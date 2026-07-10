@@ -21,6 +21,14 @@ echo Iniciando agente de impressao...
 echo Mantenha esta janela aberta. Pressione Ctrl+C para encerrar.
 echo.
 
+:loop
 python agent.py
+if errorlevel 1 (
+    echo.
+    echo [run.bat] O agente parou inesperadamente. Reiniciando em 5 segundos...
+    echo [run.bat] Feche esta janela para encerrar de vez.
+    timeout /t 5 /nobreak >nul
+    goto loop
+)
 
 pause
