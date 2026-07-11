@@ -64,14 +64,51 @@ Copie `config.json.example` para `config.json`. Coloque o JSON baixado como `ser
 ### 4. Instale dependências e execute
 
 **Opção A – Com Python instalado:**
-- Duplo-clique em `run.bat`
-- Ou: `pip install -r requirements.txt` e `python agent.py`
+- Duplo-clique em `run.bat` (cria o venv automaticamente na primeira vez, veja abaixo)
+- Ou manualmente, veja [Ambiente virtual (venv)](#ambiente-virtual-venv)
 
 **Opção B – Executável (.exe):**
 - Na máquina de desenvolvimento: execute `build.bat`
 - Copie `dist/PrintAgent.exe` para a máquina Windows
 - Coloque na mesma pasta: `config.json`, `service-account.json`
 - Execute `PrintAgent.exe`
+
+## Ambiente virtual (venv)
+
+O `run.bat` e o `run-silent.bat` já criam e ativam o venv automaticamente — na maioria dos casos não é preciso fazer nada manualmente. Use os passos abaixo só se for rodar `agent.py` direto, sem passar pelos `.bat`.
+
+### Criar o venv (uma vez só)
+
+```bat
+cd /d caminho\para\t3PrintAgent
+python -m venv venv
+```
+
+### Ativar o venv
+
+- **cmd:** `venv\Scripts\activate.bat`
+- **PowerShell:** `venv\Scripts\Activate.ps1`
+  - Se der erro de política de execução, rode antes: `Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass`
+
+O prompt passa a mostrar `(venv)` quando estiver ativo.
+
+### Instalar dependências
+
+```bat
+pip install -r requirements.txt
+```
+
+### Rodar o agente
+
+```bat
+python agent.py
+```
+
+### Desativar
+
+```bat
+deactivate
+```
 
 ## Executar em segundo plano
 
