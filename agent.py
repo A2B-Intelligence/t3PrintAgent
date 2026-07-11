@@ -368,6 +368,17 @@ def get_product_name(db, order_data: dict) -> str:
     Retorna 'N/A' se não encontrar.
     """
     try:
+        # Primeiro tenta usar nomes já disponíveis no pedido, se houver.
+        fallback_name = (
+            order_data.get('productName')
+            or order_data.get('product_name')
+            or order_data.get('serviceName')
+            or order_data.get('service_name')
+            or order_data.get('name')
+        )
+        if fallback_name:
+            return str(fallback_name)
+
         # Passo 1: Obter productId do productRef do pedido
         product_ref = order_data.get('productRef')
         if not product_ref:

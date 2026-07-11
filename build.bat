@@ -37,6 +37,7 @@ echo [4/4] Gerando executavel...
 python -m PyInstaller --onefile --name "PrintAgent" ^
     --hidden-import=firebase_admin ^
     --hidden-import=xhtml2pdf ^
+    --hidden-import=xhtml2pdf.pisa ^
     --hidden-import=google.cloud.firestore ^
     --hidden-import=google.cloud ^
     --hidden-import=receipt_generator ^
@@ -47,6 +48,8 @@ python -m PyInstaller --onefile --name "PrintAgent" ^
     --hidden-import=google.auth.transport.requests ^
     --hidden-import=charset_normalizer ^
     --collect-submodules=charset_normalizer ^
+    --collect-submodules=xhtml2pdf ^
+    --collect-submodules=reportlab ^
     --console ^
     --clean ^
     agent.py

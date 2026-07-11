@@ -19,7 +19,8 @@ BASE_DIR = Path(sys.executable).parent if getattr(sys, 'frozen', False) else Pat
 try:
     from xhtml2pdf import pisa
     HAS_XHTML2PDF = True
-except ImportError:
+except Exception as e:
+    print(f"[Printer] Aviso ao importar xhtml2pdf: {e}")
     HAS_XHTML2PDF = False
 
 SUMATRA_PATHS = [
