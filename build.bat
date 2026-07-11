@@ -45,6 +45,8 @@ python -m PyInstaller --onefile --name "PrintAgent" ^
     --hidden-import=reportlab ^
     --hidden-import=google.auth ^
     --hidden-import=google.auth.transport.requests ^
+    --hidden-import=charset_normalizer ^
+    --collect-submodules=charset_normalizer ^
     --console ^
     --clean ^
     agent.py

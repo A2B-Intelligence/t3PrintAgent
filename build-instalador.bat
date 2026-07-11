@@ -69,6 +69,8 @@ python -m PyInstaller --onefile --console --clean --name "PrintAgent" ^
     --hidden-import=reportlab ^
     --hidden-import=google.auth ^
     --hidden-import=google.auth.transport.requests ^
+    --hidden-import=charset_normalizer ^
+    --collect-submodules=charset_normalizer ^
     agent.py
 if errorlevel 1 (
     echo ERRO: falha ao gerar o executavel
