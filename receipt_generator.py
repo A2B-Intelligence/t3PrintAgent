@@ -74,6 +74,13 @@ def generate_group_receipt_html(
     date_str = order_date.strftime('%d/%m/%Y')
     time_str = order_date.strftime('%H:%M')
 
+    # Alerta de alergia (mesmo formato do receipt-printer.ts do t3restaurante)
+    allergy_observation = (order.get('allergyObservation') or '').strip()
+    allergy_alert_html = (
+        f'<div class="allergy-alert">!!! ALERGIA !!!<br>{allergy_observation}</div>'
+        if allergy_observation else ''
+    )
+
     html = f'''<html>
 <head>
   <title>Pedido #{order_number} - {group_title}</title>
@@ -123,6 +130,15 @@ def generate_group_receipt_html(
     .group-section {{
       margin-bottom: 1px;
     }}
+    .allergy-alert {{
+      border: 3px solid #000;
+      padding: 5px;
+      margin: 8px 0;
+      text-align: center;
+      font-weight: bold;
+      font-size: 16px;
+      text-transform: uppercase;
+    }}
   </style>
 </head>
 <body>
@@ -139,6 +155,7 @@ def generate_group_receipt_html(
         html += f'  <div>Endereco: {customer["address"]}</div>\n'
     
     html += f'''
+  {allergy_alert_html}
   <div class="line"></div>
   <div class="flex">
     <span class="bold">Itens do pedido<br></span>
