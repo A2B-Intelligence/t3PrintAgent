@@ -34,7 +34,7 @@ from receipt_generator import (
 from printer import print_to_default_printer
 
 # Versão do agente - atualize a cada release enviado ao cliente
-VERSION = '1.2.0'
+VERSION = '1.3.0'
 
 
 # Variável global para o arquivo de log
@@ -359,6 +359,73 @@ def get_table_number(db, order_data: dict) -> str:
         return 'N/A'
 
 
+def get_allergy_observation(db, order_data: dict) -> str:
+    """
+    Busca a observação de alergia do pedido:
+    1. order -> allergyObservation (se o pedido já tiver o campo)
+    2. Comanda/{comandaId} -> allergyObservation (fallback via comandaRef)
+
+    Espelha o comportamento do frontend (t3restaurante):
+    order.allergyObservation || comanda?.allergyObservation
+
+    Retorna '' se não houver observação de alergia.
+    """
+    try:
+        # Passo 1: Campo direto no pedido
+        allergy = order_data.get('allergyObservation')
+        if allergy and str(allergy).strip():
+            return str(allergy).strip()
+
+        # Passo 2: Fallback na Comanda vinculada
+        comanda_ref = order_data.get('comandaRef')
+        if not comanda_ref:
+            return ''
+
+        # Extrair o ID da comanda (pode ser DocumentReference, dict, ou string)
+        comanda_id = None
+        if hasattr(comanda_ref, 'id'):
+            comanda_id = comanda_ref.id
+        elif hasattr(comanda_ref, 'path'):
+            comanda_id = comanda_ref.path.split('/')[-1]
+        elif isinstance(comanda_ref, dict):
+            comanda_id = comanda_ref.get('id')
+            if not comanda_id and 'path' in comanda_ref:
+                comanda_id = comanda_ref['path'].split('/')[-1]
+        else:
+            comanda_str = str(comanda_ref)
+            comanda_id = comanda_str.split('/')[-1] if '/' in comanda_str else comanda_str
+
+        if not comanda_id:
+            return ''
+
+        # Buscar o documento da Comanda
+        comanda_doc = None
+        if hasattr(comanda_ref, 'get'):
+            try:
+                comanda_doc = comanda_ref.get()
+            except Exception as e:
+                print(f"[Agent] Erro ao buscar comanda via DocumentReference: {e}")
+
+        if not comanda_doc or not comanda_doc.exists:
+            try:
+                comanda_doc = db.collection('Comanda').document(comanda_id).get()
+            except Exception as e:
+                print(f"[Agent] Erro ao buscar comanda pelo ID: {e}")
+
+        if not comanda_doc or not comanda_doc.exists:
+            return ''
+
+        comanda_data = comanda_doc.to_dict() or {}
+        allergy = comanda_data.get('allergyObservation')
+        if allergy and str(allergy).strip():
+            return str(allergy).strip()
+        return ''
+
+    except Exception as e:
+        print(f"[Agent] Erro ao buscar observação de alergia: {e}")
+        return ''
+
+
 def get_product_name(db, order_data: dict) -> str:
     """
     Busca o nome do produto seguindo a estrutura:
@@ -462,6 +529,10 @@ def process_order(order_id: str, order_data: dict, category_map: dict, db) -> bo
         
         # Busca o nome do produto nas coleções relacionadas
         product_name = get_product_name(db, order_data)
+
+        # Busca a observação de alergia (pedido ou comanda vinculada)
+        # e adiciona ao order_data para uso no HTML
+        order_data['allergyObservation'] = get_allergy_observation(db, order_data)
         
         # Agrupa os itens por categoria
         grouped_items: dict[str, list] = {}
